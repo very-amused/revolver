@@ -11,7 +11,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// A config entry specifying how to match and open a filetype
+// A config entry specifying a method for opening a filetype and its match conditions
 type ConfigItem struct {
 	// File conditions (evaluated as a union - one must match)
 	MIME     *regexp.Regexp `yaml:"mime"` // File MIME type
@@ -23,6 +23,7 @@ type ConfigItem struct {
 
 	// Flags
 	Fork bool `yaml:"fork"` // Whether to fork when running the command
+	Term bool `yaml:"term"` // Whether to run the command in a new terminal
 
 	// Command run in ${SHELL:-/bin/sh} to open the file
 	Command string `yaml:"cmd"`
@@ -55,16 +56,20 @@ func (c ConfigItem) Match(file string) bool {
 
 type Config []*ConfigItem
 
-// Match - Match a file by extension, returning the command associated with the first match
-func (c Config) Match(file string) (command string) {
+// Match - Match a file by extension, returning the nth matching config entry
+func (c Config) Match(file string, n uint) (method *ConfigItem) {
 	// Return the first matching command
-	for _, entry := range c {
-		if entry.Match(file) {
-			return entry.Command
+	var nMatch uint
+	for _, method := range c {
+		if method.Match(file) {
+			if nMatch == n {
+				return method
+			}
+			nMatch++
 		}
 	}
 
-	return ""
+	return nil
 }
 
 //go:embed revolver.yaml
