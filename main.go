@@ -18,7 +18,7 @@ var (
 
 func main() {
 	// Process flags
-	flag.BoolVar(&listMethods, "l", false, "List defined methods for opening the files with format i:flags:cmd")
+	flag.BoolVar(&listMethods, "l", false, "List defined methods for opening the files (format i:label:flags:cmd)")
 	flag.UintVar(&methodIndex, "p", 0, "Which method to use for opening the file")
 	flag.Parse()
 
@@ -33,17 +33,38 @@ func main() {
 		os.Exit(1)
 	}
 
+	// List all matching methods if -l was passed
+	if listMethods {
+		// Verify the matches can open all files specified
+		matches := config.AllMatches(files[0])
+		for _, file := range files[1:] {
+			for _, method := range matches {
+				if !method.Match(file) {
+					fmt.Fprintln(os.Stderr, "files cannot have different types")
+					os.Exit(1)
+				}
+			}
+		}
+
+		// Print the matches
+		for i, method := range matches {
+			fmt.Printf("%d:%s\n", i, method)
+		}
+		return
+	}
+
 	// Run the command, forking if requested
 	if method := config.Match(files[0], methodIndex); method != nil {
 		// Verify the match can open all files specified
 		for _, file := range files[1:] {
 			if !method.Match(file) {
-				fmt.Fprintf(os.Stderr, "files cannot have different types")
+				fmt.Fprintln(os.Stderr, "files cannot have different types")
 				os.Exit(1)
 			}
 		}
 
 		cmd := exec.Command(shell, "-c", method.Command)
+		fmt.Println(cmd.Environ())
 		if method.Fork {
 			cmd.SysProcAttr = &syscall.SysProcAttr{
 				Setpgid: true,
@@ -56,7 +77,8 @@ func main() {
 			cmd.Stderr = os.Stderr
 		}
 		if err := cmd.Run(); err != nil {
-			fmt.Fprintf(os.Stderr, "failed to run command: %v", err)
+			fmt.Fprintf(os.Stderr, "failed to run command: %v\n", err)
+			os.Exit(cmd.ProcessState.ExitCode())
 		}
 	}
 }

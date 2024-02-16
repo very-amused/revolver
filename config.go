@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
 	"gopkg.in/yaml.v3"
@@ -14,6 +15,9 @@ import (
 
 // A config entry specifying a method for opening a filetype and its match conditions
 type ConfigItem struct {
+	// Optional method label
+	Label string `yaml:"label"`
+
 	// File conditions (evaluated as a union - one must match)
 	MIME     *regexp.Regexp `yaml:"mime"` // File MIME type
 	Ext      *regexp.Regexp `yaml:"ext"`  // Filename extension
@@ -31,7 +35,7 @@ type ConfigItem struct {
 }
 
 // Match - Return whether this entry's conditions match a filepath
-func (c ConfigItem) Match(file string) bool {
+func (c *ConfigItem) Match(file string) bool {
 	// First check system conditions as an intersection
 	if len(c.HasProg) > 0 {
 		if _, err := exec.LookPath(c.HasProg); err != nil {
@@ -55,13 +59,35 @@ func (c ConfigItem) Match(file string) bool {
 	return false
 }
 
+// Return a string in the form label:flags:cmd
+func (c *ConfigItem) String() string {
+	var sb strings.Builder
+	// Label
+	sb.WriteString(c.Label)
+	sb.WriteRune(':')
+
+	// Flags
+	if c.Fork {
+		sb.WriteRune('f')
+	}
+	if c.Term {
+		sb.WriteRune('t')
+	}
+	sb.WriteRune(':')
+
+	// Command
+	sb.WriteString(c.Command)
+
+	return sb.String()
+}
+
 type Config []*ConfigItem
 
 // Match - Match a file by extension, returning the nth matching config entry
-func (c Config) Match(file string, n uint) (method *ConfigItem) {
+func (c *Config) Match(file string, n uint) (method *ConfigItem) {
 	// Return the first matching command
 	var nMatch uint
-	for _, method := range c {
+	for _, method := range *c {
 		if method.Match(file) {
 			if nMatch == n {
 				return method
@@ -71,6 +97,17 @@ func (c Config) Match(file string, n uint) (method *ConfigItem) {
 	}
 
 	return nil
+}
+
+// AllMatches - Get a slice of all matching methods for a file
+func (c *Config) AllMatches(file string) (matches []*ConfigItem) {
+	for _, method := range *c {
+		if method.Match(file) {
+			matches = append(matches, method)
+		}
+	}
+
+	return matches
 }
 
 var config Config
