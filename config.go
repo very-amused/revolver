@@ -59,6 +59,26 @@ func (c *ConfigItem) Match(file string) bool {
 	return false
 }
 
+// buildCommand - Build the final command to be passed to the shell
+func (c *ConfigItem) buildCommand(files []string) string {
+	var sb strings.Builder
+	sb.WriteString("set -- '")
+	for _, file := range files {
+		// Remove any strings containing NUL
+		if strings.ContainsRune(file, '\x00') {
+			continue
+		}
+		// Preserve filenames by shell escaping ' -> '\''
+		// Thanks to rifle's codebase for figuring this out, it saved me much head to wall contact
+		// https://github.com/ranger/ranger/blob/136416c7e2ecc27315fe2354ecadfe09202df7dd/ranger/ext/rifle.py#L352
+		sb.WriteString(strings.ReplaceAll(file, "'", "'\\\\''"))
+	}
+	sb.WriteString("'; ")
+	sb.WriteString(c.Command)
+
+	return sb.String()
+}
+
 // Return a string in the form label:flags:cmd
 func (c *ConfigItem) String() string {
 	var sb strings.Builder

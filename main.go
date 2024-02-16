@@ -63,8 +63,7 @@ func main() {
 			}
 		}
 
-		cmd := exec.Command(shell, "-c", method.Command)
-		fmt.Println(cmd.Environ())
+		cmd := exec.Command(shell, "-c", method.buildCommand(files))
 		if method.Fork {
 			cmd.SysProcAttr = &syscall.SysProcAttr{
 				Setpgid: true,
