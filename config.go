@@ -3,6 +3,7 @@ package main
 import (
 	_ "embed"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
@@ -72,13 +73,25 @@ func (c Config) Match(file string, n uint) (method *ConfigItem) {
 	return nil
 }
 
-//go:embed revolver.yaml
-var rawConfig []byte
-
 var config Config
 
 func init() {
-	if err := yaml.Unmarshal(rawConfig, &config); err != nil {
-		panic(fmt.Errorf("Failed to unmarshal revolver.yaml: %v", err))
+	// Determine config path
+	var configDir = os.Getenv("XDG_CONFIG_HOME")
+	if len(configDir) == 0 {
+		configDir = filepath.Join(os.Getenv("HOME"), ".config")
+	}
+	const configName = "revolver.yaml"
+	configPath := filepath.Join(configDir, "revolver", configName)
+
+	// Read and decode config file
+	f, err := os.Open(configPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to open %s: %v\n", configName, err)
+		os.Exit(1)
+	}
+	if err = yaml.NewDecoder(f).Decode(&config); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to decode %s: %v\n", configName, err)
+		os.Exit(1)
 	}
 }
