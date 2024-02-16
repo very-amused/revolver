@@ -11,27 +11,24 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-/*
-A config entry specifying how to open a file based on the following conditions:
-
-File (evaluated as a union - one must be true):
-  - MIME type (mime)
-  - Extension (ext)
-  - Basename (name)
-
-System (evaluated as an intersection - all specified must be true)
-  - Has executable in $PATH (has)
-*/
+// A config entry specifying how to match and open a filetype
 type ConfigItem struct {
-	MIME     *regexp.Regexp `yaml:"mime"`
-	Ext      *regexp.Regexp `yaml:"ext"`
-	Basename *regexp.Regexp `yaml:"name"`
+	// File conditions (evaluated as a union - one must match)
+	MIME     *regexp.Regexp `yaml:"mime"` // File MIME type
+	Ext      *regexp.Regexp `yaml:"ext"`  // Filename extension
+	Basename *regexp.Regexp `yaml:"name"` // Filename basename
 
-	HasProg string `yaml:"has"`
+	// System conditions (evaluated as an intersection - all specified must be true)
+	HasProg string `yaml:"has"` // Program is in $PATH
 
+	// Flags
+	Fork bool `yaml:"fork"` // Whether to fork when running the command
+
+	// Command run in ${SHELL:-/bin/sh} to open the file
 	Command string `yaml:"cmd"`
 }
 
+// Match - Return whether this entry's conditions match a filepath
 func (c ConfigItem) Match(file string) bool {
 	// First check system conditions as an intersection
 	if len(c.HasProg) > 0 {
@@ -56,7 +53,19 @@ func (c ConfigItem) Match(file string) bool {
 	return false
 }
 
-type Config []ConfigItem
+type Config []*ConfigItem
+
+// Match - Match a file by extension, returning the command associated with the first match
+func (c Config) Match(file string) (command string) {
+	// Return the first matching command
+	for _, entry := range c {
+		if entry.Match(file) {
+			return entry.Command
+		}
+	}
+
+	return ""
+}
 
 //go:embed revolver.yaml
 var rawConfig []byte
