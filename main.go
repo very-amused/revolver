@@ -75,7 +75,12 @@ func main() {
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 		}
-		if err := cmd.Run(); err != nil {
+		cmd.Start()
+		// If forking, don't wait for the command to exit
+		if method.Fork {
+			return
+		}
+		if err := cmd.Wait(); err != nil {
 			fmt.Fprintf(os.Stderr, "failed to run command: %v\n", err)
 			os.Exit(cmd.ProcessState.ExitCode())
 		}
