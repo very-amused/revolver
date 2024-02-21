@@ -63,7 +63,20 @@ func main() {
 			}
 		}
 
-		cmd := exec.Command(shell, "-c", method.buildCommand(files))
+		var cmd *exec.Cmd
+		if method.Term {
+			// Read $TERMCMD
+			termCmd := os.Getenv("TERMCMD")
+			if len(termCmd) == 0 {
+				fmt.Fprintln(os.Stderr, "TERMCMD must be set to run commands in new terminals")
+				os.Exit(1)
+			}
+
+			// Use $TERMCMD -e to run in a new term
+			cmd = exec.Command(termCmd, "-e", shell, "-c", method.buildCommand(files))
+		} else {
+			cmd = exec.Command(shell, "-c", method.buildCommand(files))
+		}
 		if method.Fork {
 			cmd.SysProcAttr = &syscall.SysProcAttr{
 				Setpgid: true,
@@ -75,8 +88,11 @@ func main() {
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 		}
+
+		// Run the commmand
 		cmd.Start()
-		// If forking, don't wait for the command to exit
+
+		// If forking, don't wait for an exit
 		if method.Fork {
 			return
 		}
