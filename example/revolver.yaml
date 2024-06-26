@@ -1,0 +1,89 @@
+- ext: 'x?html?'
+  cmd: '${VISUAL:-$EDITOR} -- "$@"'
+
+# Handle text files using editor/pager
+- label: 'editor'
+  mime: '^text'
+  ext: 'xml|json|csv|tex|py|pl|rb|js|sh|php|ini'
+  cmd: '${VISUAL:-$EDITOR} -- "$@"'
+- label: 'pager'
+  mime: '^text'
+  ext: 'xml|json|csv|tex|py|pl|rb|js|sh|php|ini'
+  cmd: '$PAGER -- "$@"'
+
+# PDFs
+- label: 'zathura'
+  mime: 'application/pdf'
+  ext: 'pdf'
+  fork: true
+  cmd: 'zathura -- "$@"'
+
+# Scripts
+- ext: 'py'
+  cmd: 'python -- "$1"'
+- ext: 'pl'
+  cmd: 'perl -- "$1"'
+- ext: 'rb'
+  cmd: 'ruby -- "$1"'
+- label: 'node-firejail'
+  ext: 'js'
+  cmd: 'firejail --net=none node -- "$1"'
+- ext: 'sh'
+  cmd: 'sh -- "$1"'
+- ext: 'php'
+  cmd: 'php -- "$1"'
+
+# Audio (terminal/MPD)
+- mime: '^audio|ogg$'
+  has: 'mpv'
+  term: true
+  fork: true
+  cmd: 'mpv -- "$@"'
+
+# Video
+- mime: '^video'
+  has: 'mpv'
+  fork: true
+  cmd: 'mpv -- "$@"'
+
+# Pictures
+- mime: '^image/svg'
+  has: 'inkscape'
+  fork: true
+  cmd: 'inkscape -- "$@"'
+- mime: '^image/gif'
+  has: 'sxiv'
+  fork: true
+  cmd: 'sxiv -b -a -- "$@"'
+- mime: '^image'
+  has: 'sxiv'
+  fork: true
+  cmd: 'sxiv -b -- "$@"'
+# Set wallpaper
+- label: 'set wallpaper'
+  mime: '^image'
+  fork: true
+  cmd: 'rwall -i "$@"'
+- label: 'set wallpaper (span)'
+  mime: '^image'
+  fork: true
+  cmd: 'rwall span -i "$@"'
+
+# Archives (requires atool)
+- ext: '7z'
+  has: '7z'
+  cmd: '7z -p l "$@" | "$PAGER"'
+- ext: 'ace|ar|arc|bz2?|cab|cpio|cpt|deb|dgc|dmg|gz|iso|jar|msi|pkg|rar|shar|tar|tgz|xar|xpi|xz|zip'
+  has: 'atool'
+  cmd: 'atool --list --each -- "$@" | "$PAGER"'
+- ext: '7z|ace|ar|arc|bz2?|cab|cpio|cpt|deb|dgc|dmg|gz|iso|jar|msi|pkg|rar|shar|tar|tgz|xar|xpi|xz|zip'
+  has: 'atool'
+  cmd: 'atool --extract --each -- "$@"'
+
+# Fonts
+- mime: '^font'
+  has: 'fontforge'
+  fork: true
+  cmd: 'fontforge "$@"'
+
+## TODO: Last-ditch methods
