@@ -6,12 +6,7 @@ ifndef DATADIR
 DATADIR=$(PREFIX)/share
 endif
 
-# Go build shim
-revolver:
-	go build
-.PHONY: revolver
-
-install: revolver README.md LICENSE
+install: README.md LICENSE
 	install -d $(DESTDIR)$(PREFIX)/bin
 	install -m755 revolver $(DESTDIR)$(PREFIX)/bin/revolver
 	install -d $(DESTDIR)$(DATADIR)/doc/revolver

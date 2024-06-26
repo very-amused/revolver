@@ -14,7 +14,7 @@ import (
 )
 
 // A config entry specifying a method for opening a filetype and its match conditions
-type ConfigItem struct {
+type ConfigEntry struct {
 	// Optional method label
 	Label string `yaml:"label"`
 
@@ -35,7 +35,7 @@ type ConfigItem struct {
 }
 
 // Match - Return whether this entry's conditions match a filepath
-func (c *ConfigItem) Match(file string) bool {
+func (c *ConfigEntry) Match(file string) bool {
 	// First check system conditions as an intersection
 	if len(c.HasProg) > 0 {
 		if _, err := exec.LookPath(c.HasProg); err != nil {
@@ -60,7 +60,7 @@ func (c *ConfigItem) Match(file string) bool {
 }
 
 // buildCommand - Build the final command to be passed to the shell
-func (c *ConfigItem) buildCommand(files []string) string {
+func (c *ConfigEntry) buildCommand(files []string) string {
 	var sb strings.Builder
 	sb.WriteString("set -- '")
 	for _, file := range files {
@@ -80,7 +80,7 @@ func (c *ConfigItem) buildCommand(files []string) string {
 }
 
 // Return a string in the form label:flags:cmd
-func (c *ConfigItem) String() string {
+func (c *ConfigEntry) String() string {
 	var sb strings.Builder
 	// Label
 	sb.WriteString(c.Label)
@@ -101,10 +101,10 @@ func (c *ConfigItem) String() string {
 	return sb.String()
 }
 
-type Config []*ConfigItem
+type Config []*ConfigEntry
 
 // Match - Match a file by extension, returning the nth matching config entry
-func (c *Config) Match(file string, n uint) (method *ConfigItem) {
+func (c *Config) Match(file string, n uint) (method *ConfigEntry) {
 	// Return the first matching command
 	var nMatch uint
 	for _, method := range *c {
@@ -120,7 +120,7 @@ func (c *Config) Match(file string, n uint) (method *ConfigItem) {
 }
 
 // AllMatches - Get a slice of all matching methods for a file
-func (c *Config) AllMatches(file string) (matches []*ConfigItem) {
+func (c *Config) AllMatches(file string) (matches []*ConfigEntry) {
 	for _, method := range *c {
 		if method.Match(file) {
 			matches = append(matches, method)
