@@ -39,6 +39,18 @@
   term: true
   fork: true
   cmd: 'mpv -- "$@"'
+- label: 'mpd (play)'
+  mime: '^audio|ogg$'
+  has: 'mpc'
+  cmd: 'mpc insert -- "file://$@" && mpc next && mpc play'
+- label: 'mpd (queue after current song)'
+  mime: '^audio|ogg$'
+  has: 'mpc'
+  cmd: 'mpc insert -- "file://$@"'
+- label: 'mpd (queue at end)'
+  mime: '^audio|ogg$'
+  has: 'mpc'
+  cmd: 'mpc add -- "file://$@"'
 
 # Video
 - mime: '^video'
