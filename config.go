@@ -71,7 +71,7 @@ func (c *ConfigEntry) buildCommand(files []string) string {
 		// Preserve filenames by shell escaping ' -> '\''
 		// Thanks to rifle's codebase for figuring this out, it saved me much head to wall contact
 		// https://github.com/ranger/ranger/blob/136416c7e2ecc27315fe2354ecadfe09202df7dd/ranger/ext/rifle.py#L352
-		sb.WriteString(strings.ReplaceAll(file, "'", "'\\\\''"))
+		sb.WriteString(strings.ReplaceAll(file, "'", "'\\''"))
 	}
 	sb.WriteString("'; ")
 	sb.WriteString(c.Command)
